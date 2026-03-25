@@ -10,7 +10,7 @@
         <p class="welcome-sub">{{ currentDate }} — Todo en orden por aquí.</p>
       </div>
       <div class="welcome-badge">
-        <span class="badge-icon">⬡</span>
+        <span class="badge-icon">🍓</span>
         <span class="badge-text">Sesión activa</span>
       </div>
     </section>

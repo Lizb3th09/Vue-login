@@ -1,79 +1,66 @@
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabaseClient'
 
-const _user = ref(JSON.parse(localStorage.getItem('user')) || null)
+const _user = ref(null)
+const _isLoggedIn = ref(false)
 
 export function useAuth() {
-  const isAuthenticated = computed(() => !!_user.value)
   const user = computed(() => _user.value)
+  const isAuthenticated = computed(() => _isLoggedIn.value)
 
-  supabase.auth.getSession().then(({ data }) => {
-    if (data.session?.user) {
-      setUser(data.session.user)
-    }
-  })
-
-  supabase.auth.onAuthStateChange((_event, session) => {
-    if (session?.user) {
-      setUser(session.user)
-    } else {
-      _user.value = null
-      localStorage.removeItem('user')
-    }
-  })
-
-  //  Función centralizada
   function setUser(u) {
     _user.value = {
-      name: u.user_metadata?.name || u.email?.split('@')[0] || 'Usuario',
+      name: u.user_metadata?.name || u.email?.split('@')[0],
       email: u.email
     }
-
-    localStorage.setItem('user', JSON.stringify(_user.value))
   }
 
-  // ── LOGIN ──
+  function clearUser() {
+    _user.value = null
+    _isLoggedIn.value = false
+    localStorage.removeItem('logged_in')
+  }
+
+
   async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     })
 
-    if (error) {
-      return { ok: false, error: error.message }
-    }
+    if (error) return { ok: false, error: error.message }
 
     setUser(data.user)
+
+    _isLoggedIn.value = true
+    localStorage.setItem('logged_in', 'true')
 
     return { ok: true }
   }
 
-  // ── REGISTER ──
   async function register(name, email, password) {
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: {
-          name: name
-        }
+        data: { name }
       }
     })
 
-    if (error) {
-      return { ok: false, error: error.message }
-    }
+    if (error) return { ok: false, error: error.message }
 
-    setUser(data.user)
+
 
     return { ok: true }
   }
 
-  // ── LOGOUT ──
   async function logout() {
     await supabase.auth.signOut()
-    _user.value = null
-    localStorage.removeItem('user')
+    clearUser()
+  }
+
+  if (localStorage.getItem('logged_in') === 'true') {
+    _isLoggedIn.value = true
   }
 
   return {
@@ -84,3 +71,5 @@ export function useAuth() {
     register
   }
 }
+
+// este arregla el dashboard

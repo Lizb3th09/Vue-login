@@ -7,7 +7,7 @@
     <div class="login-card">
      
       <div class="card-header">
-        <span class="card-icon">⬡</span>
+        <span class="card-icon">✨</span>
         <h1 class="card-title">Bienvenido</h1>
         <p class="card-subtitle">Ingresa tus credenciales para continuar</p>
       </div>
@@ -64,22 +64,24 @@
         </div>
 
         
-        <div class="hint-box">
-          <span class="hint-label">Credenciales de prueba:</span>
-          <code>eduardo@gmail.com</code> / <code>s0nr13*</code>
-        </div>
-
-        
         <button
           type="submit"
           class="btn-submit"
           :disabled="isLoading"
           :class="{ 'btn-submit--loading': isLoading }"
         >
-          <span v-if="!isLoading">Iniciar sesión →</span>
+          <span v-if="!isLoading">Iniciar sesión </span>
           <span v-else class="spinner"></span>
         </button>
 
+
+        <p class="forgot-link">
+        <RouterLink to="/forgot-password">
+         ¿Olvidaste tu contraseña?
+         </RouterLink>
+        </p>
+
+        
       </form>
     </div>
   </div>
@@ -197,12 +199,12 @@ async function handleLogin() {
   position: relative;
   width: 100%;
   max-width: 420px;
-  background: rgba(22, 22, 26, 0.95);
+  background: rgba(31, 8, 52, 0);
   border: 1px solid rgba(200, 169, 110, 0.15);
   border-radius: 16px;
   padding: 2.5rem 2rem;
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.03),
+    0 0 0 1px rgb(255, 5, 255),
     0 24px 48px rgba(0, 0, 0, 0.5);
   animation: cardIn 0.4s ease both;
 }
@@ -221,7 +223,7 @@ async function handleLogin() {
 .card-icon {
   display: block;
   font-size: 2rem;
-  color: #c8a96e;
+  color: #ffffff;
   margin-bottom: 0.75rem;
   animation: pulse 3s ease-in-out infinite;
 }
@@ -235,7 +237,7 @@ async function handleLogin() {
   font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #e8e4dc, #c8a96e);
+  background: linear-gradient(135deg, #ff0095, #ffffff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0 0 0.4rem;
@@ -361,7 +363,7 @@ async function handleLogin() {
 
 code {
   background: rgba(200, 169, 110, 0.12);
-  color: #c8a96e;
+  color: #ffffff;
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
   font-size: 0.8rem;
@@ -371,7 +373,7 @@ code {
 .btn-submit {
   margin-top: 0.5rem;
   padding: 0.8rem;
-  background: linear-gradient(135deg, #c8a96e, #a0834e);
+  background: linear-gradient(135deg, #d000ff, #a0834e);
   color: #0d0d0f;
   border: none;
   border-radius: 10px;
@@ -383,9 +385,11 @@ code {
   letter-spacing: 0.01em;
 }
 
+
 .btn-submit:hover:not(:disabled) {
   opacity: 0.9;
   transform: translateY(-1px);
+ 
 }
 
 .btn-submit:disabled {

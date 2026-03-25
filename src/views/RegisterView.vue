@@ -166,11 +166,11 @@
             <span class="info-val">{{ form.email }}</span>
           </div>
           <p class="redirect-msg">
-            Redirigiendo al dashboard en
+            Redirigiendo al login en
             <span class="countdown">{{ countdown }}s</span>…
           </p>
-          <RouterLink to="/dashboard" class="btn-submit" style="text-decoration:none; text-align:center;">
-            Ir ahora →
+          <RouterLink to="/login">
+           
           </RouterLink>
         </div>
 
@@ -186,7 +186,7 @@ import { useAuth } from '@/composables/useAuth'
 
 const router  = useRouter()
 const { register } = useAuth()
-
+ 
 
 const form = reactive({ name: '', email: '', password: '', confirm: '' })
 const errors  = reactive({ name: '', email: '', password: '', confirm: '' })
@@ -297,7 +297,7 @@ async function handleRegister() {
       countdown.value--
       if (countdown.value <= 0) {
         clearInterval(timer)
-        router.push('/dashboard')
+        router.push('/login')
       }
     }, 1000)
 
