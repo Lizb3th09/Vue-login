@@ -156,11 +156,12 @@
 
         <div v-else key="success" class="success-state">
           <div class="success-icon">✦</div>
-          <h2 class="success-title">¡Cuenta creada!</h2>
-          <p class="success-msg">
-            Bienvenido, <strong>{{ form.name }}</strong>.<br/>
-            Tu cuenta fue registrada exitosamente.
-          </p>
+  <h2 class="success-title">¡Casi listo!</h2>
+  <p class="success-msg">
+    Revisa tu correo <strong>{{ form.email }}</strong> para activar tu cuenta.<br/>
+    Solo después de confirmar el email podrás iniciar sesión.
+  </p>
+        
           <div class="success-info">
             <span class="info-key">Email</span>
             <span class="info-val">{{ form.email }}</span>
@@ -290,16 +291,9 @@ async function handleRegister() {
       return
     }
 
-    success.value = true
-
   
-    const timer = setInterval(() => {
-      countdown.value--
-      if (countdown.value <= 0) {
-        clearInterval(timer)
-        router.push('/login')
-      }
-    }, 1000)
+    // Solo mostramos mensaje de revisar correo
+    success.value = true
 
   } catch (err) {
     errorMsg.value = 'Ocurrió un error inesperado'
@@ -307,6 +301,23 @@ async function handleRegister() {
     isLoading.value = false
   }
 }
+
+
+import { watch } from 'vue'
+
+// Redirección automática al login tras registro exitoso
+watch(success, (val) => {
+  if (val) {
+    countdown.value = 3
+    const interval = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) {
+        clearInterval(interval)
+        router.push('/login')
+      }
+    }, 2000)
+  }
+})
 </script>
 
 

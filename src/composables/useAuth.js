@@ -43,7 +43,8 @@ export function useAuth() {
       email,
       password,
       options: {
-        data: { name }
+        data: { name },
+        emailRedirectTo: 'http://localhost:5173/login'
       }
     })
 

@@ -7,8 +7,8 @@ const LoginView = () => import('@/views/LoginView.vue')
 const RegisterView = () => import('@/views/RegisterView.vue')
 const DashboardView = () => import('@/views/DashboardView.vue')
 const NotFoundView = () => import('@/views/NotFoundView.vue')
-//const ForgotPasswordView = () => import('@/views/ForgotPasswordView.vue')
-//const ResetPasswordView = () => import('@/views/ResetPasswordView.vue')
+const ForgotPasswordView = () => import('@/views/ForgotPasswordView.vue')
+const ResetPasswordView = () => import('@/views/ResetPasswordView.vue')
 
 
 const routes = [
@@ -33,25 +33,25 @@ const routes = [
     },
   },
 
-  // {
-  //   path: '/forgot-password',
-  //   name: 'forgot-password',
-  //   component: ForgotPasswordView,
-  //   meta: {
-  //     title: 'Recuperar contraseña',
-  //     guestOnly: true
-  //   },
-  // },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: ForgotPasswordView,
+    meta: {
+      title: 'Recuperar contraseña',
+      guestOnly: true
+    },
+  },
 
-  // {
-  //   path: '/reset-password',
-  //   name: 'reset-password',
-  //   component: ResetPasswordView,
-  //   meta: {
-  //     title: 'Nueva contraseña',
-  //     guestOnly: true
-  //   },
-  // },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: ResetPasswordView,
+    meta: {
+      title: 'Nueva contraseña',
+      guestOnly: true
+    },
+  },
 
   {
     path: '/register',

@@ -7,7 +7,7 @@
     <div class="login-card">
      
       <div class="card-header">
-        <span class="card-icon">✨</span>
+        <span class="card-icon"></span>
         <h1 class="card-title">Bienvenido</h1>
         <p class="card-subtitle">Ingresa tus credenciales para continuar</p>
       </div>
