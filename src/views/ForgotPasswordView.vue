@@ -12,7 +12,7 @@
         <p>Ingresa tu correo y te enviaremos un enlace</p>
       </div>
 
-      <form @submit.prevent="handleReset" class="form">
+      <form @submit.prevent="handleReset" class="form" v-if="!emailSent">
 
         <div class="input-group">
           <span class="input-icon"></span>
@@ -25,7 +25,7 @@
         </div>
 
         <button :disabled="loading" class="btn">
-          <span v-if="!loading">Enviar enlace </span>
+          <span v-if="!loading">Enviar enlace</span>
           <span v-else class="spinner"></span>
         </button>
 
@@ -39,7 +39,8 @@
         <p v-if="error" class="error">{{ error }}</p>
       </Transition>
 
-      <RouterLink to="/login" class="back-link">
+      <!--  Botón Cancelar - se oculta cuando emailSent es true -->
+      <RouterLink v-if="!emailSent && !loading" to="/" class="back-link">
         Cancelar
       </RouterLink>
 
@@ -49,12 +50,15 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabaseClient'
 
+const router = useRouter()
 const email = ref('')
 const loading = ref(false)
 const msg = ref('')
 const error = ref('')
+const emailSent = ref(false) //  estado para controlar si ya se envió el email
 
 async function handleReset() {
   loading.value = true
@@ -68,8 +72,15 @@ async function handleReset() {
 
   if (err) {
     error.value = err.message
+    loading.value = false
   } else {
+    emailSent.value = true //  Marcar que el email fue enviado
     msg.value = 'Revisa tu correo. Te enviamos un enlace para restablecer tu contraseña.'
+    
+    // Esperar 2 segundos para que el usuario vea el mensaje, luego redirigir al home
+    setTimeout(() => {
+      router.push('/')
+    }, 2000)
   }
 
   loading.value = false
@@ -236,4 +247,3 @@ async function handleReset() {
 }
 
 </style>
-
