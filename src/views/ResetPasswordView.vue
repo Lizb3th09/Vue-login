@@ -6,6 +6,19 @@
         <span class="icon">🔍</span>
         <h1>Verificando enlace</h1>
         <p>Por favor espera un momento...</p>
+        <div class="spinner-container">
+          <div class="spinner"></div>
+        </div>
+      </div>
+
+      <!-- Estado de redirección con spinner -->
+      <div v-else-if="redirecting" class="card-header">
+        <span class="icon">⚠️</span>
+        <h1>{{ redirectTitle }}</h1>
+        <p>{{ redirectText }}</p>
+        <div class="spinner-container">
+          <div class="spinner"></div>
+        </div>
       </div>
 
       <!-- Formulario solo si el token es válido -->
@@ -24,30 +37,26 @@
         />
 
         <button @click="handleUpdate" :disabled="loading || !password || password.length < 6">
-          {{ loading ? 'Guardando...' : 'Actualizar contraseña' }}
+          <span v-if="!loading">Actualizar contraseña</span>
+          <div v-else class="button-spinner"></div>
         </button>
 
         <p v-if="msg" class="success">{{ msg }}</p>
         <p v-if="error" class="error">{{ error }}</p>
-        
       </template>
 
-      <!-- Token inválido o expirado - Solo muestra error, no el formulario -->
-      <div v-else-if="!verifying && !isValidToken" class="error-container">
+      <!-- Token inválido o expirado -->
+      <div v-else-if="!verifying && !isValidToken && !redirecting" class="error-container">
         <div class="card-header">
           <span class="error-icon">⚠️</span>
           <h1 class="error-title">Enlace inválido</h1>
-          <p class="error-subtitle">No se puede restablecer la contraseña</p>
+          <p class="error-subtitle">Redirigiendo al inicio...</p>
         </div>
         
         <div class="error-message-box">
           <p>Este enlace ya fue usado o ha caducado.</p>
-          <p>Solicita un nuevo restablecimiento de contraseña.</p>
+          <p>Serás redirigido automáticamente.</p>
         </div>
-        
-        <RouterLink to="/" class="retry-link">
-          Volver al home
-        </RouterLink>
       </div>
     </div>
   </div>
@@ -61,66 +70,49 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const password = ref('')
 const loading = ref(false)
+const redirecting = ref(false)
+const redirectTitle = ref('')
+const redirectText = ref('')
 const msg = ref('')
 const error = ref('')
 const verifying = ref(true)
 const isValidToken = ref(false)
 
-// Limpiar mensajes
 function clearMessages() {
   msg.value = ''
   error.value = ''
 }
 
-// Verificar si hay un token válido en la URL
+// spinner
+function redirectToHome(title, text) {
+  redirectTitle.value = title
+  redirectText.value = text
+  redirecting.value = true
+
+  setTimeout(() => {
+    window.location.href = '/' 
+  }, 2000)
+}
+
 async function verifyToken() {
   verifying.value = true
   
-  // Obtener el token de la URL (hash fragment)
-  const hashParams = new URLSearchParams(window.location.hash.substring(1))
-  const accessToken = hashParams.get('access_token')
-  const refreshToken = hashParams.get('refresh_token')
-  const type = hashParams.get('type')
-
-  // Caso 1: No hay token en la URL (acceso directo)
-  if (!accessToken || type !== 'recovery') {
-    console.warn('Acceso directo a reset-password sin token válido')
-    isValidToken.value = false
-    verifying.value = false
-    return
-  }
-
-  // Caso 2: Verificar si el token es válido
-  try {
-    // Intentar establecer la sesión con el token
-    const { data, error: sessionError } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken
-    })
-
-    if (sessionError || !data.session) {
-      console.error('Token inválido o expirado:', sessionError)
-      isValidToken.value = false
-      verifying.value = false
-      return
-    }
-
-    // Token válido
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  
+  if (session && !sessionError) {
     isValidToken.value = true
     verifying.value = false
-
-    // Limpiar la URL para que no se vea el token
     window.history.replaceState({}, document.title, '/reset-password')
-
-  } catch (error) {
-    console.error('Error verificando token:', error)
-    isValidToken.value = false
-    verifying.value = false
+    return
   }
+  
+  isValidToken.value = false
+  verifying.value = false
+  
+  redirectToHome('Enlace inválido', 'Redirigiendo al inicio...')
 }
 
 async function handleUpdate() {
-  // Validaciones
   if (!password.value) {
     error.value = 'Ingresa una contraseña'
     return
@@ -136,55 +128,31 @@ async function handleUpdate() {
   error.value = ''
 
   try {
-    const { error: err } = await supabase.auth.updateUser({ 
+    const { error: updateError } = await supabase.auth.updateUser({ 
       password: password.value 
     })
 
-    if (err) {
+    if (updateError) {
       loading.value = false
       
-      // Manejar diferentes tipos de errores
-      if (err.message.includes('expired') || err.message.includes('token')) {
-        error.value = 'El enlace ha expirado. Solicita uno nuevo.'
-        isValidToken.value = false // Marcar como inválido
-      } else if (err.message.includes('same as the old password')) {
-        error.value = 'La nueva contraseña debe ser diferente a la anterior'
-      } else if (err.message.includes('at least 6 characters')) {
-        error.value = 'La contraseña debe tener al menos 6 caracteres'
+      if (updateError.message.includes('expired') || updateError.status === 403) {
+        redirectToHome('Enlace expirado', 'Redirigiendo al inicio...')
       } else {
-        error.value = err.message || 'Error al actualizar la contraseña'
+        error.value = updateError.message
       }
       return
     }
 
-    // Éxito - actualización completada
     loading.value = false
-    msg.value = 'Contraseña actualizada correctamente ✅'
-    
-    // Cerrar sesión para invalidar el token de recuperación
     await supabase.auth.signOut()
-    
-    // Redirigir o cerrar ventana después de 1.5 segundos
-    setTimeout(() => {
-      // Intentar cerrar la ventana (si se abrió desde el email)
-      window.close()
-      
-      // Si no se pudo cerrar (pestaña normal), redirigir al home
-      setTimeout(() => {
-        if (!window.closed) {
-          router.push('/')
-        }
-      }, 100)
-    }, 1500)
+    redirectToHome('¡Contraseña actualizada!', 'Redirigiendo al inicio...')
     
   } catch (e) {
     loading.value = false
-    console.error('Error inesperado:', e)
-    error.value = 'Ocurrió un error de conexión. Verifica tu internet e intenta de nuevo.'
+    error.value = 'Ocurrió un error. Intenta de nuevo.'
   }
 }
 
-// Verificar token al montar el componente
 onMounted(() => {
   verifyToken()
 })
@@ -196,7 +164,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-
   background-size: 400% 400%;
   animation: bgMove 15s ease infinite;
 }
@@ -285,6 +252,9 @@ button {
   color: white;
   font-size: 1rem;
   transition: transform 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 button:hover:not(:disabled) {
@@ -325,21 +295,6 @@ button:disabled {
   }
 }
 
-.back-link {
-  display: block;
-  margin-top: 1.5rem;
-  color: #6eb4e8;
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s ease;
-}
-
-.back-link:hover {
-  color: #8ec4f0;
-  text-decoration: underline;
-}
-
-/* Estilos para error container - versión limpia */
 .error-container {
   text-align: center;
 }
@@ -378,31 +333,32 @@ button:disabled {
   font-size: 0.9rem;
 }
 
-.retry-link {
-  display: inline-block;
-  padding: 0.7rem 1.5rem;
-  background: linear-gradient(135deg, #6eb4e8, #4a90c4);
-  border-radius: 10px;
-  color: white;
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: bold;
-  transition: all 0.2s ease;
-  margin-top: 0.5rem;
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5rem;
 }
 
-.retry-link:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(110, 180, 232, 0.3);
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(110, 180, 232, 0.2);
+  border-top-color: #6eb4e8;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-.info {
-  background: rgba(110, 180, 232, 0.1);
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-  color: #6eb4e8;
-  text-align: center;
-  animation: pulse 1.5s infinite;
+.button-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>
