@@ -8,7 +8,7 @@
             alt="logo"
             class="brand-icon"
           />
-          <span class="brand-text">LCK</span>
+          <span class="brand-text">MIRA</span>
         </RouterLink>
       </div>
 
